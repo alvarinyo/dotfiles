@@ -1,0 +1,3 @@
+[shell]
+program = "/usr/bin/zsh"
+args = ["-c", "tmux attach || tmux"]
