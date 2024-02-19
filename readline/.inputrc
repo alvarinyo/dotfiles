@@ -1,0 +1,24 @@
+$if picocom
+    #set enable-bracketed-paste off
+    "\C-e" rlwrap-direct-keypress # 
+    "\C-a" rlwrap-direct-keypress # Edit this line if you use the picocom -e option!!
+    "\C-x" rlwrap-direct-keypress
+    "\C-q" rlwrap-direct-keypress
+    "\C-b" rlwrap-direct-keypress
+    "\C-u" rlwrap-direct-keypress
+    "\C-d" rlwrap-direct-keypress
+    "\C-i" rlwrap-direct-keypress
+    "\C-j" rlwrap-direct-keypress
+    "\C-f" rlwrap-direct-keypress
+    "\C-y" rlwrap-direct-keypress
+    "\C-p" rlwrap-direct-keypress
+    "\C-t" rlwrap-direct-keypress
+    "\C-g" rlwrap-direct-keypress
+    "\C-|" rlwrap-direct-keypress
+    "\C-c" rlwrap-direct-keypress
+    "\C-w" rlwrap-direct-keypress
+    "\C-s" rlwrap-direct-keypress
+    "\C-r" rlwrap-direct-keypress
+    "\C-v" rlwrap-direct-keypress
+    "\C-h" rlwrap-direct-keypress
+    

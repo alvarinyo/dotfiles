@@ -71,7 +71,8 @@ export FZF_DEFAULT_OPTS=$FZF_DEFAULT_OPTS'
  --color=fg:-1,bg:-1,hl:#5f87af
  --color=fg+:#d0d0d0,bg+:#7eada4,hl+:#5fd7ff
  --color=info:#afaf87,prompt:#d7005f,pointer:#af5fff
- --color=marker:#87ff00,spinner:#af5fff,header:#87afaf'
+ --color=marker:#87ff00,spinner:#af5fff,header:#87afaf
+ --border=rounded'
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
