@@ -60,12 +60,14 @@ source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 source ~/powerlevel10k/powerlevel10k.zsh-theme
 
-hist_plugin_ () { LBUFFER+=$(history 0 | fzf +s --tac --height 10 | sed 's/^ *[0-9]* *//'); zle redisplay }
+hist_plugin_ () { LBUFFER=$(history 0 | fzf +s --tac --height 10 -q "'$LBUFFER" | sed 's/^ *[0-9]* *//'); zle redisplay }
 zle -N hist_plugin_ hist_plugin_
 bindkey '^r' hist_plugin_
 
-cargo_bin_path="/home/alvaroluis/.cargo/bin"
-export PATH="$PATH:$cargo_bin_path"
+cargo_bin_path="$HOME/.cargo/bin"
+scripts_path="$HOME/.local/bin/scripts"
+
+export PATH="$PATH:$cargo_bin_path:$scripts_path"
 
 export FZF_DEFAULT_OPTS=$FZF_DEFAULT_OPTS'
  --color=fg:-1,bg:-1,hl:#5f87af
@@ -73,6 +75,23 @@ export FZF_DEFAULT_OPTS=$FZF_DEFAULT_OPTS'
  --color=info:#afaf87,prompt:#d7005f,pointer:#af5fff
  --color=marker:#87ff00,spinner:#af5fff,header:#87afaf
  --border=rounded'
+
+
+if command -v batcat &> /dev/null
+then
+	alias cat="batcat -p"
+fi
+
+pf () {
+	#ls -a --group-directories-first | fzf --tac --preview='preview_file.sh {}' --bind shift-up:preview-page-up,shift-down:preview-page-down
+	script.ls_aux | fzf --preview='script.preview_file {}' --bind 'shift-up:preview-page-up,shift-down:preview-page-down,home:last,end:first,alt-enter:reload(cd {} || cd $(dirname {}) ; script.ls_aux),alt-bspace:reload(cd $(dirname {})/.. || : ; script.ls_aux)' -d '//' --header-lines=1 --with-nth=-1 | sed 's://:/:g'
+}
+
+pf_plugin_ () { ag -g '' | pf; echo; zle redisplay }
+zle -N pf_plugin_ pf_plugin_
+
+bindkey 'ññ' pf_plugin_
+
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh

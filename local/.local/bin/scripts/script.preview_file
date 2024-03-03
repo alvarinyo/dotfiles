@@ -1,0 +1,13 @@
+#!/usr/bin/env zsh
+
+NORMALIZED_PATH=$(echo $1 | sed 's://:/:g')
+
+if [[ -d $NORMALIZED_PATH ]]    
+then    
+	tree -a -C -L 3 $NORMALIZED_PATH    
+elif command -v batcat &> /dev/null    
+then    
+	batcat --color=always --style=numbers,header --line-range=:500 $NORMALIZED_PATH    
+else    
+	cat $NORMALIZED_PATH    
+fi    
