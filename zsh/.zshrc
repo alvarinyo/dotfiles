@@ -83,16 +83,23 @@ then
 fi
 
 pf () {
-	#ls -a --group-directories-first | fzf --tac --preview='preview_file.sh {}' --bind shift-up:preview-page-up,shift-down:preview-page-down
-	script.ls_aux | fzf --preview='script.preview_file {}' --bind 'shift-up:preview-page-up,shift-down:preview-page-down,home:last,end:first,alt-enter:reload(cd {} || cd $(dirname {}) ; script.ls_aux),alt-bspace:reload(cd $(dirname {})/.. || : ; script.ls_aux)' -d '//' --header-lines=1 --with-nth=-1 | sed 's://:/:g'
+    LBUFFER+=$(script.ls_aux | fzf --preview='script.preview_file {}' --bind 'shift-up:preview-page-up,shift-down:preview-page-down,home:last,end:first,alt-enter:reload(cd {} || cd $(dirname {}) ; script.ls_aux),alt-bspace:reload(cd $(dirname {})/.. || : ; script.ls_aux)' -d '//' --header-lines=1 --with-nth=-1 | sed 's://:/:g')
 }
 
-pf_plugin_ () { ag -g '' | pf; echo; zle redisplay }
-zle -N pf_plugin_ pf_plugin_
+pfsearch () {
+  LBUFFER+=$(ag --hidden -g '' . | fzf --preview='script.preview_file {}' --bind 'shift-up:preview-page-up,shift-down:preview-page-down,home:last,end:first,alt-enter:reload(cd {} || cd $(dirname {}) ; script.ls_aux),alt-bspace:reload(cd $(dirname {})/.. || : ; script.ls      _aux)' -d '//' --header-lines=1 --with-nth=-1 | sed 's://:/:g')
+}
 
-bindkey 'ññ' pf_plugin_
+pf_plugin_ () { pf; echo; zle redisplay }
+pfsearch_plugin_ () { pfsearch; echo; zle redisplay }
+zle -N pf_plugin_ pf_plugin_
+zle -N pfsearch_plugin_ pfsearch_plugin_
+bindkey 'ñn' pf_plugin_
+bindkey 'ñf' pfsearch_plugin_
 
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
+
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
