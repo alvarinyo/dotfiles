@@ -66,6 +66,7 @@ bindkey '^r' hist_plugin_
 
 cargo_bin_path="$HOME/.cargo/bin"
 scripts_path="$HOME/.local/bin/scripts"
+rcimports_path="$HOME/.local/lib/rcimports"
 
 export PATH="$PATH:$cargo_bin_path:$scripts_path"
 
@@ -76,30 +77,47 @@ export FZF_DEFAULT_OPTS=$FZF_DEFAULT_OPTS'
  --color=marker:#87ff00,spinner:#af5fff,header:#87afaf
  --border=rounded'
 
-
 if command -v batcat &> /dev/null
 then
 	alias cat="batcat -p"
 fi
 
 pf () {
-    LBUFFER+=$(script.ls_aux | fzf --preview='script.preview_file {}' --bind 'shift-up:preview-page-up,shift-down:preview-page-down,home:last,end:first,alt-enter:reload(cd {} || cd $(dirname {}) ; script.ls_aux),alt-bspace:reload(cd $(dirname {})/.. || : ; script.ls_aux)' -d '//' --header-lines=1 --with-nth=-1 | sed 's://:/:g')
+    fzf --preview='script.preview_file {}' --bind 'shift-up:preview-page-up,shift-down:preview-page-down,home:last,end:first,alt-enter:reload(cd {} || cd $(dirname {}) ; script.ls_aux),alt-bspace:reload(cd $(dirname {})/.. || : ; script.ls_aux)' -d '//' --header-lines=1 --with-nth=-1 | sed 's://:/:g'
 }
 
-pfsearch () {
-  LBUFFER+=$(ag --hidden -g '' . | fzf --preview='script.preview_file {}' --bind 'shift-up:preview-page-up,shift-down:preview-page-down,home:last,end:first,alt-enter:reload(cd {} || cd $(dirname {}) ; script.ls_aux),alt-bspace:reload(cd $(dirname {})/.. || : ; script.ls      _aux)' -d '//' --header-lines=1 --with-nth=-1 | sed 's://:/:g')
+pf_with_reload_script () {
+    fzf --preview='script.preview_file {}' --bind 'shift-up:preview-page-up,shift-down:preview-page-down,home:last,end:first,alt-enter:reload(cd {} || cd $(dirname {}) ; $1),alt-bspace:reload(cd $(dirname {})/.. || : ; $1)' -d '//' --header-lines=1 --with-nth=-1 | sed 's://:/:g'
 }
 
-pf_plugin_ () { pf; echo; zle redisplay }
-pfsearch_plugin_ () { pfsearch; echo; zle redisplay }
+pfag () {
+    ag --hidden -g '' . | pf
+}
+
+pfn () {
+    find $1 -maxdepth 1 -readable | pf
+}
+
+pff () {
+    find $1 ! -readable -prune -o -print | pf
+}
+
+pfscripts () {
+    find $scripts_path -maxdepth 1 ! -executable -prune -o -print | awk -F'/' 'NR>1{print $NF}' | fzf --preview="script.preview_file $scripts_path/{}" --bind 'shift-up:preview-page-up,shift-down:preview-page-down,home:last,end:first' 
+}
+
+pf_plugin_ () { LBUFFER+=$(script.ls_aux | pf); echo; zle redisplay }
+pff_plugin_ () { LBUFFER+=$(pff); echo; zle redisplay }
+pfscripts_plugin_ () { LBUFFER+=$(pfscripts); echo; zle redisplay }
 zle -N pf_plugin_ pf_plugin_
-zle -N pfsearch_plugin_ pfsearch_plugin_
-bindkey 'ñn' pf_plugin_
-bindkey 'ñf' pfsearch_plugin_
+zle -N pff_plugin_ pff_plugin_
+zle -N pfscripts_plugin_ pfscripts_plugin_
+bindkey 'ñl' pf_plugin_
+bindkey 'ñf' pff_plugin_
+bindkey 'ñs' pfscripts_plugin_
 
 
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-
-
+[ -d $rcimports_path ] && source $rcimports_path/*
+[ -f ~/.p10k.zsh ] && source ~/.p10k.zsh
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
