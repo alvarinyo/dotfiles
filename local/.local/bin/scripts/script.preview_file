@@ -7,10 +7,14 @@ then
     :
 elif [ -d $NORMALIZED_PATH ]    
 then
-	tree -a -C -L 3 $NORMALIZED_PATH    
+	tree -a -C -L 3 $NORMALIZED_PATH
+elif file --mime-type $NORMALIZED_PATH | awk '{print $2}' | grep image
+then
+    catimg -H $(($(tput cols)/2)) -r 1  $NORMALIZED_PATH
 elif command -v batcat > /dev/null    
 then    
 	batcat --color=always --style=numbers,header --line-range=:500 $NORMALIZED_PATH    
 else    
 	cat $NORMALIZED_PATH    
 fi
+
