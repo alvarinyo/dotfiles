@@ -82,18 +82,27 @@ if command -v batcat &> /dev/null
 then
 	alias cat="batcat -p"
 fi
-pf_plugin_ () { LBUFFER+=$(script.ls_aux | pf); echo; zle redisplay }
+
+pfl_plugin_ () { LBUFFER+=$(script.ls_aux | pfl); echo; zle redisplay }
 pff_plugin_ () { LBUFFER+=$(pff); echo; zle redisplay }
-pfscripts_plugin_ () { LBUFFER+=$(pfscripts); echo; zle redisplay }
-gitlog_fzf_plugin_ () { gitlog_fzf; echo; zle redisplay }
-zle -N pf_plugin_ pf_plugin_
+pfscripts_plugin_ () { LBUFFER+=$(pfs); echo; zle redisplay }
+gitlog_fzf_plugin_ () { LBUFFER=$(pfgl); echo; zle redisplay }
+quickyank_plugin_ () { LBUFFER+=" | xsel -bi"; zle redisplay }
+pfd_plugin_ () { LBUFFER+=$(pfd); echo; zle redisplay }
+zle -N pfl_plugin_ pfl_plugin_
 zle -N pff_plugin_ pff_plugin_
 zle -N pfscripts_plugin_ pfscripts_plugin_
 zle -N gitlog_fzf_plugin_ gitlog_fzf_plugin_
-bindkey 'ñl' pf_plugin_
+zle -N quickyank_plugin_ quickyank_plugin_
+zle -N pfd_plugin_ pfd_plugin_
+bindkey 'ñl' pfl_plugin_
 bindkey 'ñf' pff_plugin_
 bindkey 'ñs' pfscripts_plugin_
 bindkey 'ñgl' gitlog_fzf_plugin_
+bindkey 'ñy' quickyank_plugin_
+bindkey 'ñd' pfd_plugin_
+
+
 
 [ -d $rcimports_path ] && for f in $rcimports_path/*; do source $f; done
 [ -f ~/.p10k.zsh ] && source ~/.p10k.zsh

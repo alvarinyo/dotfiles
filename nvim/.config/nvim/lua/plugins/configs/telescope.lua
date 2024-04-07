@@ -1,3 +1,5 @@
+local trouble = require("trouble.providers.telescope")
+
 local options = {
   pickers = {
     find_files = {
@@ -60,11 +62,14 @@ local options = {
     -- Developer configurations: Not meant for general override
     buffer_previewer_maker = require("telescope.previewers").buffer_previewer_maker,
     mappings = {
-      n = { ["q"] = require("telescope.actions").close },
+      n = { ["q"] = require("telescope.actions").close,
+            ["<c-t>"] = trouble.open_with_trouble
+      },
+      i = { ["<c-t>"] = trouble.open_with_trouble },
     },
   },
 
-  extensions_list = { "themes", "terms" },
+  extensions_list = { "themes", "terms", "fzf" },
 }
 
 return options

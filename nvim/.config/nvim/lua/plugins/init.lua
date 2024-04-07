@@ -19,17 +19,6 @@ local default_plugins = {
   },
 
   {
-    "NvChad/nvterm",
-    init = function()
-      require("core.utils").load_mappings "nvterm"
-    end,
-    config = function(_, opts)
-      require "base46.term"
-      require("nvterm").setup(opts)
-    end,
-  },
-
-  {
     "rmagatti/auto-session",
      lazy = false,
      opts = function()
@@ -37,10 +26,6 @@ local default_plugins = {
      end,
      config = function(_, opts)
       require("auto-session").setup(opts)
--- {
---         log_level = "error",
---         auto_session_suppress_dirs = { "~/", "~/s", "~/Downloads", "/"},
---       }
      end
   },
 
@@ -262,6 +247,26 @@ local default_plugins = {
       require("which-key").setup(opts)
     end,
   },
+
+  {
+    "folke/trouble.nvim",
+    lazy = false,
+    dependencies = { "nvim-tree/nvim-web-devicons" },
+    -- opts = {},
+  },
+
+  {
+    "nvim-telescope/telescope-fzf-native.nvim",
+    build = 'make',
+  },
+
+  {
+    lazy = false,
+    "nmac427/guess-indent.nvim",
+    config = function()
+      require('guess-indent').setup({})
+    end
+  }
 }
 
 local config = require("core.utils").load_config()

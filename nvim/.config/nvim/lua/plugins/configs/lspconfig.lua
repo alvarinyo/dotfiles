@@ -61,4 +61,25 @@ require("lspconfig").lua_ls.setup {
   },
 }
 
+require'lspconfig'.clangd.setup {
+  on_attach = M.on_attach,
+  capabilities = M.capabilities
+}
+
+
+require'lspconfig'.bashls.setup {
+  on_attach = M.on_attach,
+  capabilities = M.capabilities
+}
+
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = 'sh',
+  callback = function()
+    vim.lsp.start({
+      name = 'bash-language-server',
+      cmd = { 'bash-language-server', 'start' },
+    })
+  end,
+})
+
 return M

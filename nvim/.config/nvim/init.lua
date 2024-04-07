@@ -1,3 +1,8 @@
+-- For simple options, just use .vimrc:
+vim.cmd([[
+  source ~/.vimrc
+]])
+
 require "core"
 
 local custom_init_path = vim.api.nvim_get_runtime_file("lua/custom/init.lua", false)[1]
@@ -22,7 +27,3 @@ require "plugins"
 
 vim.o.shell = 'zsh'
 
--- For simple options, just use .vimrc:
-vim.cmd([[
-  source ~/.vimrc
-]])
