@@ -33,6 +33,9 @@ M.general = {
     ["<leader>n"] = { "<cmd> set nu! <CR>", "Toggle line number" },
     ["<leader>rn"] = { "<cmd> set rnu! <CR>", "Toggle relative number" },
 
+    ["<leader>yy"] = { "<cmd> let @+=expand('%') . ':' . line('.') <CR>", "Yank file name and line number" },
+    ["<leader>k"] = { "<cmd> echo getline('.') <CR>", "Echo current line string" },
+
     -- Allow moving the cursor through wrapped lines with j, k, <Up> and <Down>
     -- http://www.reddit.com/r/vim/comments/2k4cbr/problem_with_gj_and_gk/
     -- empty mode is same as using <cmd> :map
@@ -188,7 +191,8 @@ M.lspconfig = {
 
     ["gr"] = {
       function()
-        vim.lsp.buf.references()
+        require("trouble").toggle("lsp_references")
+        -- vim.lsp.buf.references()
       end,
       "LSP references",
     },
@@ -253,6 +257,44 @@ M.lspconfig = {
   },
 }
 
+M.trouble = {
+  plugin = true,
+
+  n = {
+    ["<leader>tx"] = {
+      function()
+        require("trouble").toggle()
+      end,
+      "Trouble: toggle window",
+     },
+    ["<leader>tw"] = {
+      function()
+        require("trouble").toggle("workspace_diagnostics")
+      end,
+      "Trouble: workspace_diagnostics",
+     },
+    ["<leader>td"] = {
+      function()
+        require("trouble").toggle("document_diagnostics")
+      end,
+      "Trouble: document_diagnostics",
+     },
+    ["<leader>tq"] = {
+      function()
+        require("trouble").toggle("quickfix")
+      end,
+      "Trouble: quickfix",
+     },
+    ["<leader>tl"] = {
+      function()
+        require("trouble").toggle("loclist")
+      end,
+      "Trouble: loclist",
+     },
+    -- gr (lsp_references) is in lsp section
+  }
+}
+
 M.nvimtree = {
   plugin = true,
 
@@ -272,6 +314,7 @@ M.telescope = {
     -- find
     ["<leader>ff"] = { "<cmd> Telescope find_files <CR>", "Find files" },
     ["<leader>fa"] = { "<cmd> Telescope find_files follow=true no_ignore=true hidden=true <CR>", "Find all" },
+    ["<leader>fg"] = { "<cmd> Telescope live_grep_args <CR>", "Live grep args" },
     ["<leader>fw"] = { "<cmd> Telescope live_grep <CR>", "Live grep" },
     ["<leader>fb"] = { "<cmd> Telescope buffers <CR>", "Find buffers" },
     ["<leader>fh"] = { "<cmd> Telescope help_tags <CR>", "Help page" },
@@ -456,7 +499,7 @@ M.gitsigns = {
       "Blame line",
     },
 
-    ["<leader>td"] = {
+    ["<leader>gtd"] = {
       function()
         require("gitsigns").toggle_deleted()
       end,

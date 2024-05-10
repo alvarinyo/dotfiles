@@ -208,7 +208,15 @@ local default_plugins = {
 
   {
     "nvim-telescope/telescope.nvim",
-    dependencies = { "nvim-treesitter/nvim-treesitter" },
+    dependencies = {
+      "nvim-treesitter/nvim-treesitter",
+      {
+        "nvim-telescope/telescope-live-grep-args.nvim" ,
+        -- This will not install any breaking changes.
+        -- For major updates, this must be adjusted manually.
+        version = "^1.0.0",
+      },
+    },
     cmd = "Telescope",
     init = function()
       require("core.utils").load_mappings "telescope"
@@ -226,6 +234,9 @@ local default_plugins = {
         telescope.load_extension(ext)
       end
     end,
+  },
+  {
+    "ThePrimeagen/vim-be-good",
   },
   -- {
   --   "iamcco/markdown-preview.nvim",
@@ -251,6 +262,9 @@ local default_plugins = {
   {
     "folke/trouble.nvim",
     lazy = false,
+    init = function()
+      require("core.utils").load_mappings "trouble"
+    end,
     dependencies = { "nvim-tree/nvim-web-devicons" },
     -- opts = {},
   },
@@ -266,6 +280,9 @@ local default_plugins = {
     config = function()
       require('guess-indent').setup({})
     end
+  },
+  {
+    "sakhnik/nvim-gdb",
   }
 }
 

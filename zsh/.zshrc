@@ -86,23 +86,35 @@ fi
 pfl_plugin_ () { LBUFFER+=$(script.ls_aux | pfl); echo; zle redisplay }
 pff_plugin_ () { LBUFFER+=$(pff); echo; zle redisplay }
 pfscripts_plugin_ () { LBUFFER+=$(pfs); echo; zle redisplay }
-gitlog_fzf_plugin_ () { LBUFFER=$(pfgl); echo; zle redisplay }
-quickyank_plugin_ () { LBUFFER+=" | xsel -bi"; zle redisplay }
+pfgl_plugin_ () { LBUFFER+=$(pfgl); echo; zle redisplay }
+pfgs_plugin_ () { LBUFFER+=$(pfgs); echo; zle redisplay }
+quickyank_plugin_ () { LBUFFER+=" | tee >(xsel -bi)"; zle redisplay }
 pfd_plugin_ () { LBUFFER+=$(pfd); echo; zle redisplay }
+tp_plugin_ () { tp }
 zle -N pfl_plugin_ pfl_plugin_
 zle -N pff_plugin_ pff_plugin_
 zle -N pfscripts_plugin_ pfscripts_plugin_
-zle -N gitlog_fzf_plugin_ gitlog_fzf_plugin_
+zle -N pfgl_plugin_ pfgl_plugin_
+zle -N pfgs_plugin_ pfgs_plugin_
 zle -N quickyank_plugin_ quickyank_plugin_
 zle -N pfd_plugin_ pfd_plugin_
+zle -N tp_plugin_ tp_plugin_
 bindkey 'ñl' pfl_plugin_
 bindkey 'ñf' pff_plugin_
 bindkey 'ñs' pfscripts_plugin_
-bindkey 'ñgl' gitlog_fzf_plugin_
+bindkey 'ñgl' pfgl_plugin_
+bindkey 'ñgs' pfgs_plugin_
 bindkey 'ñy' quickyank_plugin_
 bindkey 'ñd' pfd_plugin_
+bindkey 'ñtp' tp_plugin_
 
+autoload -z edit-command-line
+zle -N edit-command-line
+bindkey "^X^E" edit-command-line
 
+tmux_enter_copy_mode_ () { tmux copy-mode }
+zle -N tmux_enter_copy_mode_ tmux_enter_copy_mode_
+bindkey 'ñkj' tmux_enter_copy_mode_
 
 [ -d $rcimports_path ] && for f in $rcimports_path/*; do source $f; done
 [ -f ~/.p10k.zsh ] && source ~/.p10k.zsh

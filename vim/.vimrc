@@ -12,3 +12,4 @@ set hlsearch is nu rnu
 inoremap kj <esc>
 vnoremap kj <esc>
 cnoremap kj <esc>
+tnoremap kj <esc><esc>

@@ -71,6 +71,16 @@ autocmd("FileType", {
   end,
 })
 
+autocmd('FileType', {
+  pattern = 'sh',
+  callback = function()
+    vim.lsp.start({
+      name = 'bash-language-server',
+      cmd = { 'bash-language-server', 'start' },
+    })
+  end,
+})
+
 -- reload some chadrc options on-save
 autocmd("BufWritePost", {
   pattern = vim.tbl_map(function(path)
