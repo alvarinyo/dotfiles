@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+
+# Function to select a random word starting with a given letter
+select_random_word() {
+    local letter=$1
+    grep -i "^$letter" ~/.local/data/0_palabras_todas_no_conjugaciones.txt | shuf -n 1
+}
+
+# Function to fetch the definition of a word from the DLE
+fetch_definition() {
+    local word=$1
+    elinks -dump "https://dle.rae.es/$word" | script.util.secgrep "Consultar" "Real Academia Española © Todos los derechos reservados" | sed 1d
+}
+
+# Function to hide occurrences of a word in text
+hide_occurrences() {
+    local word=$1
+    local text=$2
+    echo "$text" | sed "s/$word/<...>/gI"
+}
+
+# Function to display only numbered list items from text
+display_numbered_items() {
+    local text=$1
+    num=1
+    while [ $num -lt 50 ]
+    do
+        echo "$text" | script.util.secgrep "^$num\." '^$'
+        result=$?
+        if [ $result -ne 0 ]; then
+            break
+        fi
+        num=$((num+1))
+    done
+}
+
+# Initialize variables
+hide_palabra=false
+display_numbered=false
+random_with_check=false
+
+# Parse options
+while getopts ":r:HdR:" opt; do
+  case ${opt} in
+    r )
+      random_letter=$OPTARG
+      palabra=$(select_random_word $random_letter)
+      ;;
+    H )
+      hide_palabra=true
+      ;;
+    d )
+      display_numbered=true
+      ;;
+    R )
+      random_with_check=true
+      random_letter=$OPTARG
+      palabra=$(select_random_word $random_letter)
+      ;;
+    \? )
+      echo "Usage: cmd [-r letter] [-H] [-d] [-R letter] [word]" 1>&2
+      exit 1
+      ;;
+  esac
+done
+shift $((OPTIND - 1))
+
+# If a word argument is provided, use it. Otherwise, use palabra from option or fzf
+if [ -n "$1" ]; then
+    palabra=$1
+elif [ -z "$palabra" ]; then
+    palabra=$(cat local/.local/data/0_palabras_todas_no_conjugaciones.txt | fzf)
+fi
+
+# Fetch the definition
+definition=$(fetch_definition "$palabra")
+
+# Hide occurrences of palabra if -H flag is set, or if -R is used
+if [ "$hide_palabra" = true ] || [ "$random_with_check" = true ]; then
+    definition=$(hide_occurrences "$palabra" "$definition")
+fi
+
+# Display only numbered list items if -d flag is set, or if -R is used
+if [ "$display_numbered" = true ] || [ "$random_with_check" = true ]; then
+    display_numbered_items "$definition"
+else
+    # Display the result
+    echo "$definition"
+fi
+
+# Random with check - Ask user to input a word and compare it to the selected random word
+if [ "$random_with_check" = true ]; then
+    echo "A random word starting with '$random_letter' was selected."
+    read -p "Guess the word: " user_input
+    if [ "$user_input" = "$palabra" ]; then
+        echo "Correct! The word was '$palabra'."
+    else
+        echo "Incorrect. The word was '$palabra'."
+    fi
+fi

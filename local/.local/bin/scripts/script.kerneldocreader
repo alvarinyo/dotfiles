@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+show_output() {
+    file="$1"
+    regex="$2"
+
+    cat "$file" | tr '\n' '\r' | sed 's/\r\rWhat/\r\r\r\rWhat/g' | tr '\r' '\n' | awk 'BEGIN { RS="\n\n\n\n"; FS="\n" } /^What:/ { for(i=1; i<=NF; i++) if ($i ~ /^What:.*'"$regex"'/) { print $0 "\n"; break } }' 2>asdf.txt
+}
+
+clean_regex() {
+    local regex=$1
+    echo $regex | sed 's:/:\\/:g' | sed 's:$:\$:g'
+}
+
+get_what_list() {
+    local file=$1
+    grep "What" "$file" | awk '{print $2}'
+}
+
+
+# if [ "$#" -eq 3 ]; then
+#     # echo "hey! $1 $2 $3"
+#     if [ "$1" == "show_output" ]; then
+#         show_output "$2" "$3"
+#     fi
+# el
+#
+if [ "$#" -ne 1 ]; then
+    echo "Usage: $0 <filename>"
+    exit 1
+fi
+
+# regex=$(echo $1 | sed 's:/:\\/:g' | sed 's:$:\$:g')
+# echo "$regex"
+# exit 0
+file=$1
+
+regex="$(get_what_list $file | fzf)"
+regex=$(clean_regex $regex)
+
+
+if [ ! "$regex" = "$" ]; then
+    show_output $file $regex
+fi
+
+# cat "$file" | tr '\n' '\r' | sed 's/\r\rWhat/\r\r\r\rWhat/g' | tr '\r' '\n' | awk 'BEGIN { RS="\n\n\n\n"; FS="\n" } /^What:/ { for(i=1; i<=NF; i++) if ($i ~ /^What:.*'"$regex"'/) { print $0 "\n"; break } }' #"$file"
