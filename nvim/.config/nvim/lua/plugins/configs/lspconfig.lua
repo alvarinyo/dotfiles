@@ -74,4 +74,12 @@ lspconfig.bashls.setup {
   capabilities = M.capabilities
 }
 
+lspconfig.rust_analyzer.setup {
+  on_attach = M.on_attach,
+  capabilities = M.capabilities
+  -- Server-specific settings. See `:help lspconfig-setup`
+  -- settings = {
+  --   ['rust-analyzer'] = {},
+  -- },
+}
 return M

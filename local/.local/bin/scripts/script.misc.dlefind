@@ -84,22 +84,24 @@ while getopts ":r:HdR:" opt; do
       ;;
     R )
       random_with_check=true
-      random_letter=$OPTARG
-      palabra=$(select_random_word $random_letter)
+      random_letters=$(echo $OPTARG | fold -w1)
       ;;
     \? )
-      echo "Usage: cmd [-r letter] [-H] [-d] [-R letter] [word]" 1>&2
+      echo "Usage: cmd [-r letter] [-H] [-d] [-R letters] [word]" 1>&2
       exit 1
       ;;
   esac
 done
 shift $((OPTIND - 1))
 
-# If a word argument is provided, use it. Otherwise, use palabra from option or fzf
-if [ -n "$1" ]; then
-    palabra=$1
-elif [ -z "$palabra" ]; then
-    palabra=$(cat local/.local/data/0_palabras_todas_no_conjugaciones.txt | fzf)
+
+if [ "$random_with_check" != true ]; then
+    # If a word argument is provided, use it. Otherwise, use palabra from option or fzf
+    if [ -n "$1" ]; then
+        palabra=$1
+    elif [ -z "$palabra" ]; then
+        palabra=$(cat local/.local/data/0_palabras_todas_no_conjugaciones.txt | fzf)
+    fi
 fi
 
 # Fetch the definition
@@ -107,8 +109,6 @@ definition=$(fetch_definition "$palabra")
 
 # Extract word variations
 variations=($(extract_variations "$definition"))
-
-echo "variations:${variations[@]}"
 
 # Hide occurrences of palabra if -H flag is set, or if -R is used
 if [ "$hide_palabra" = true ] || [ "$random_with_check" = true ]; then
@@ -125,22 +125,40 @@ else
     echo "$definition"
 fi
 
-# Random with check - Ask user to input a word and compare it to the selected random word or its variations
+# Random with check - Iterate over each letter of the provided word
 if [ "$random_with_check" = true ]; then
-    echo "A random word starting with '$random_letter' was selected."
-    read -p "Guess the word: " user_input
+    for random_letter in $random_letters; do
+        palabra=$(select_random_word $random_letter)
+        
+        # Fetch the definition
+        definition=$(fetch_definition "$palabra")
 
-    match_found=false
-    for variant in "${variations[@]}"; do
-        if [ "$user_input" = "$variant" ]; then
-            match_found=true
-            break
+        # Extract word variations
+        variations=($(extract_variations "$definition"))
+
+        # Hide occurrences of palabra if -H flag is set (or if -R is used)
+        for variant in "${variations[@]}"; do
+            definition=$(hide_occurrences "$variant" "$definition")
+        done
+
+        # Display only numbered list items
+        display_numbered_items "$definition"
+
+        echo "A random word starting with '$random_letter' was selected."
+        read -p "Guess the word: " user_input
+
+        match_found=false
+        for variant in "${variations[@]}"; do
+            if [ "$user_input" = "$variant" ]; then
+                match_found=true
+                break
+            fi
+        done
+
+        if [ "$match_found" = true ]; then
+            echo "Correct! The word was among the variations: ${variations[@]}"
+        else
+            echo "Incorrect. The word was '${variations[0]}'. Variations: ${variations[@]}"
         fi
     done
-
-    if [ "$match_found" = true ]; then
-        echo "Correct! The word was among the variations: ${variations[@]}"
-    else
-        echo "Incorrect. The word was '${variations[0]}'. Variations: ${variations[@]}"
-    fi
 fi

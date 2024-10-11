@@ -3,6 +3,7 @@ local options = {
     "lua-language-server",
     "clangd",
     "bash-language-server",
+    "rust-analizer",
   }, -- not an option from mason.nvim
 
   PATH = "skip",

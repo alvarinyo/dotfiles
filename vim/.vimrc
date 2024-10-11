@@ -10,6 +10,9 @@ set expandtab
 set hlsearch is nu rnu
 
 inoremap kj <esc>
-vnoremap kj <esc>
+" vnoremap kj <esc>
 cnoremap kj <esc>
 tnoremap kj <esc><esc>
+
+nnoremap <C-k> 5k
+nnoremap <C-j> 5j

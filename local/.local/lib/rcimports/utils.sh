@@ -103,5 +103,10 @@ tp ()
     {echo 'Window Command Path WindowID PaneID GlobalPaneId'; tmux list-panes -aF '#W #{pane_current_command} #{pane_current_path} #I #P #D'} | column -t | fzf --header-lines=1 --preview='tmux capture-pane -t $(echo {} | awk '"'"'{print $6}'"'"') -Nep -S 0 ' | read -r TMUX_WINDOW_NAME TMUX_PANE_CMD TMUX_PANE_PATH TMUX_WINDOW_ID TMUX_PANE_ID TMUX_GLOBAL_PANE_ID; tmux select-window -t $TMUX_WINDOW_ID; tmux select-pane -t $TMUX_PANE_ID
 }
 
+tmrw ()
+{
+    tmux rename-window $(basename $(pwd))
+}
+
 alias ndiff='git difftool --tool=nvimdiff -y $(pfgs)'
 alias findnvim='pwdx $(pgrep -a nvim | grep -v embed | awk '"'"'{print $1}'"'"') | fzf $FZF_OPTION_MULTI $FZF_OPTION_NAVIGATION | awk -F: '"'"'{print $1}'"'"''

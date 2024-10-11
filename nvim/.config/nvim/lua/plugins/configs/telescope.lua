@@ -1,4 +1,4 @@
-local trouble = require("trouble.providers.telescope")
+local trouble = require("trouble.sources.telescope")
 local lga_actions = require("telescope-live-grep-args.actions")
 
 local options = {
@@ -79,9 +79,9 @@ local options = {
     buffer_previewer_maker = require("telescope.previewers").buffer_previewer_maker,
     mappings = {
       n = { ["q"] = require("telescope.actions").close,
-            ["<c-t>"] = trouble.open_with_trouble
+            ["<c-t>"] = trouble.open
       },
-      i = { ["<c-t>"] = trouble.open_with_trouble },
+      i = { ["<c-t>"] = trouble.open},
     },
   },
 

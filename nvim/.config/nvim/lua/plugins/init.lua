@@ -281,9 +281,122 @@ local default_plugins = {
       require('guess-indent').setup({})
     end
   },
+  -- {
+  --   "sakhnik/nvim-gdb",
+  -- }
   {
-    "sakhnik/nvim-gdb",
-  }
+    "RaafatTurki/hex.nvim",
+    lazy = false,
+    -- cli command used to dump hex data
+    dump_cmd = 'xxd -g 1 -u',
+    -- cli command used to assemble from hex data
+    assemble_cmd = 'xxd -r',
+    config = function ()
+      require('hex').setup()
+    end
+  },
+  {
+    "ThePrimeagen/harpoon",
+  },
+  {
+    lazy = false,
+    "tpope/vim-fugitive",
+  },
+  {
+    "mfussenegger/nvim-dap",
+    dependencies = {
+      "nvim-neotest/nvim-nio",
+      "rcarriga/nvim-dap-ui",
+      "theHamsta/nvim-dap-virtual-text",
+      "williamboman/mason.nvim",
+    },
+    config = function()
+      local dap = require "dap"
+      local ui = require "dapui"
+
+      require("dapui").setup()
+      -- require("dap-go").setup()
+
+      require("nvim-dap-virtual-text").setup()
+
+      dap.adapters.gdb = {
+        type = "executable",
+        command = "/home/alvaroluis/Downloads/gdb/gdb-14.2/gdb/gdb",
+        args = {
+          "--data-directory", "/home/alvaroluis/Downloads/gdb/gdb-14.2/gdb/data-directory",
+          -- "-ex", "trinigo",
+          -- "-ex", "target extended-remote 192.168.2.2:2345", -- Unnecessary - alaready included in trinigo command
+          "-i", "dap"
+        }
+      }
+
+      dap.configurations.c = {
+        {
+          -- name = "Debug J-Link",
+          -- type = "cdbg",
+          type = "gdb",
+          request = "launch",
+          name = "Trinity go-application",
+          cwd = "${workspaceFolder}",
+          program = "${workspaceFolder}/target/test/go_newmodem-linux-trinity/go_newmodem-linux-trinity", -- "test/" part is bad on purpose
+          stopAtEntry = true,
+          -- MIMode = "gdb",
+          -- miDebuggerServerAddress = "192.168.2.2:2345",
+          -- miDebuggerPath = "/usr/bin/gdb-multiarch",
+          -- miDebuggerPath = "/home/alvaroluis/Downloads/gdb/gdb-14.2/gdb/gdb",
+          serverLaunchTimeout = 5000,
+          postRemoteConnectCommands = {
+            -- {
+            --   text = "target extended-remote 192.168.2.2:2345",
+            --   ignoreFailures = true
+            -- },
+            -- {
+            --   text = "trinigo",
+            --   ignoreFailures = true
+            -- },
+            {
+              text = "monitor reset",
+              ignoreFailures = false
+            },
+            {
+              text = "load",
+              ignoreFailures = false
+            },
+
+
+          },
+        }
+      }
+
+        vim.keymap.set("n", "<space>b", dap.toggle_breakpoint)
+        vim.keymap.set("n", "<space>gb", dap.run_to_cursor)
+
+        -- Eval var under cursor
+        vim.keymap.set("n", "<space>?", function()
+          require("dapui").eval(nil, { enter = true })
+        end)
+
+        vim.keymap.set("n", "<F1>", dap.continue)
+        vim.keymap.set("n", "<F2>", dap.step_into)
+        vim.keymap.set("n", "<F3>", dap.step_over)
+        vim.keymap.set("n", "<F4>", dap.step_out)
+        vim.keymap.set("n", "<F5>", dap.step_back)
+        vim.keymap.set("n", "<F13>", dap.restart)
+
+        dap.listeners.before.attach.dapui_config = function()
+          ui.open()
+        end
+        dap.listeners.before.launch.dapui_config = function()
+          ui.open()
+        end
+        dap.listeners.before.event_terminated.dapui_config = function()
+          ui.close()
+        end
+        dap.listeners.before.event_exited.dapui_config = function()
+          ui.close()
+        end
+      end,
+  },
 }
 
 local config = require("core.utils").load_config()
