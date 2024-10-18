@@ -60,7 +60,7 @@ source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 source ~/powerlevel10k/powerlevel10k.zsh-theme
 
-hist_plugin_ () { LBUFFER=$(history 0 | fzf +s --tac --height 10 -q "'$LBUFFER" | sed 's/^ *[0-9]* *//'); zle redisplay }
+hist_plugin_ () { LBUFFER=$(history 0 | fzf +s --tac --height 16 -q "'$LBUFFER" --preview-window=down --preview='echo {}  | sed "1s/^ *[0-9]* *//" | batcat -p --color=always -l bash ' | sed 's/^ *[0-9]* *//' | sed 's/\\n/\n/g'); zle redisplay }
 zle -N hist_plugin_ hist_plugin_
 bindkey '^r' hist_plugin_
 
@@ -121,5 +121,5 @@ bindkey 'ñkj' tmux_enter_copy_mode_
 
 [ -d $rcimports_path ] && for f in $rcimports_path/*; do source $f; done
 [ -f ~/.p10k.zsh ] && source ~/.p10k.zsh
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+# [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 

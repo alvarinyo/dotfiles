@@ -303,6 +303,16 @@ local default_plugins = {
     "tpope/vim-fugitive",
   },
   {
+    lazy = false,
+    "tpope/vim-rsi",
+  },
+  {
+    "norcalli/nvim-terminal.lua",
+    config = function ()
+      require('terminal').setup()
+    end
+  },
+  {
     "mfussenegger/nvim-dap",
     dependencies = {
       "nvim-neotest/nvim-nio",
