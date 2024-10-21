@@ -55,6 +55,11 @@ bindkey '^[[6~' down-history
 
 eval $(thefuck --alias)
 
+
+if [[ ! "$PATH" == */home/alvaroluis/s/fzf/bin* ]]; then
+  PATH="${PATH:+${PATH}:}/home/alvaroluis/s/fzf/bin"
+fi
+
 source ~/s/fzf-tab/fzf-tab.plugin.zsh
 source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
