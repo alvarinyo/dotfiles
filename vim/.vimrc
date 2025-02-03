@@ -1,11 +1,10 @@
 filetype plugin indent on
 
-" show existing tab with 4 spaces width
 set tabstop=4
-" when indenting with '>', use 4 spaces width
-set shiftwidth=4
-" On pressing tab, insert 4 spaces
+set shiftwidth=4 smarttab
 set expandtab
+" set nolist
+set lcs+=space:·
 
 set hlsearch is nu rnu
 
@@ -16,3 +15,5 @@ tnoremap kj <esc><esc>
 
 nnoremap <C-k> 5k
 nnoremap <C-j> 5j
+vnoremap <C-k> 5k
+vnoremap <C-j> 5j

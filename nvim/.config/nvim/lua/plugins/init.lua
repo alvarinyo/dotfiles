@@ -26,6 +26,7 @@ local default_plugins = {
      end,
      config = function(_, opts)
       require("auto-session").setup(opts)
+      vim.o.sessionoptions="blank,buffers,curdir,folds,help,tabpages,winsize,winpos,terminal,localoptions"
      end
   },
 
@@ -244,6 +245,13 @@ local default_plugins = {
   --   ft = { "markdown" },
   --   build = function() vim.fn["mkdp#util#install"]() end,
   -- },
+
+  {
+    lazy = false,
+    'MeanderingProgrammer/render-markdown.nvim',
+    dependencies = { 'nvim-treesitter/nvim-treesitter' },
+    opts = {},
+  },
 
   -- Only load whichkey after all the gui
   {

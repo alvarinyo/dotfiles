@@ -39,9 +39,9 @@ declare -a FZF_OPTION_RELOAD_LS_AUX=(--bind 'ctrl-l:reload(pushd {} || pushd $(d
                                      --header-lines=1
                                      --with-nth=-1)
 
-declare -a FZF_OPTION_NAVIGATION=(--bind 'tab:toggle'
+declare -a FZF_OPTION_NAVIGATION=(--bind 'tab:toggle,ctrl-y:toggle'
                                   --bind 'home:last,end:first'
-                                  --bind 'ctrl-j:down,ctrl-k:up')
+                                  --bind 'ctrl-j:accept')
 
 pfbase () {
     args=("$@")

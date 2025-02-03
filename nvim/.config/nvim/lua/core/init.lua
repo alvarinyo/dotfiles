@@ -16,11 +16,11 @@ opt.clipboard = "unnamedplus"
 opt.cursorline = true
 
 -- Indenting
-opt.expandtab = true
-opt.shiftwidth = 4
-opt.smartindent = true
-opt.tabstop = 4
-opt.softtabstop = 4
+-- opt.expandtab = true
+-- opt.shiftwidth = 4
+-- opt.smartindent = true
+-- opt.tabstop = 4
+-- opt.softtabstop = 4
 
 opt.fillchars = { eob = " " }
 opt.ignorecase = true
@@ -71,15 +71,15 @@ autocmd("FileType", {
   end,
 })
 
-autocmd('FileType', {
-  pattern = 'sh',
-  callback = function()
-    vim.lsp.start({
-      name = 'bash-language-server',
-      cmd = { 'bash-language-server', 'start' },
-    })
-  end,
-})
+-- autocmd('FileType', {
+--   pattern = 'sh',
+--   callback = function()
+--     vim.lsp.start({
+--       name = 'bash-language-server',
+--       cmd = { 'bash-language-server', 'start' },
+--     })
+--   end,
+-- })
 
 -- reload some chadrc options on-save
 autocmd("BufWritePost", {

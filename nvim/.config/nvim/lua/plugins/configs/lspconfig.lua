@@ -69,10 +69,10 @@ lspconfig.clangd.setup {
 }
 
 
-lspconfig.bashls.setup {
-  on_attach = M.on_attach,
-  capabilities = M.capabilities
-}
+-- lspconfig.bashls.setup {
+--   on_attach = M.on_attach,
+--   capabilities = M.capabilities
+-- }
 
 lspconfig.rust_analyzer.setup {
   on_attach = M.on_attach,
@@ -82,4 +82,10 @@ lspconfig.rust_analyzer.setup {
   --   ['rust-analyzer'] = {},
   -- },
 }
+
+lspconfig.robotframework_ls.setup {
+  on_attach = M.on_attach,
+  capabilities = M.capabilities
+}
+
 return M

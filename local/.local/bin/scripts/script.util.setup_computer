@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+sudo apt update && \
+    sudo apt upgrade && \
+    sudo apt install -y git kitty zsh stow zsh-syntax-highlighting zsh-autosuggestions tree fzf tmux silversearcher-ag ripgrep xsel
+
+cd ~
+
+curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz && \
+    sudo rm -rf /opt/nvim && \
+    sudo tar -C /opt -xzf nvim-linux64.tar.gz && \
+    rm nvim-linux64.tar.gz
+
+git clone https://github.com/romkatv/powerlevel10k.git
+mkdir s
+pushd s
+git clone https://github.com/Aloxaf/fzf-tab.git
+git clone https://github.com/alvarinyo/dotfiles.git
+pushd dotfiles
+make
