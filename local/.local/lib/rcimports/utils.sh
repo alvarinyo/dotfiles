@@ -108,5 +108,10 @@ tmrw ()
     tmux rename-window $(basename $(pwd))
 }
 
+copyfiles ()
+{
+    printf '%s\n' "$@" | xargs -I{} echo "'file://$(realpath {})'" | xargs -I{} trurl {} | xclip -i -selection clipboard -t text/uri-list
+}
+
 alias ndiff='git difftool --tool=nvimdiff -y $(pfgs)'
 alias findnvim='pwdx $(pgrep -a nvim | grep -v embed | awk '"'"'{print $1}'"'"') | fzf $FZF_OPTION_MULTI $FZF_OPTION_NAVIGATION | awk -F: '"'"'{print $1}'"'"''
