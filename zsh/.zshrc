@@ -90,6 +90,16 @@ quickyank_plugin_ () { LBUFFER+=" | tee >(xsel -bi)"; zle redisplay }
 pfd_plugin_ () { LBUFFER+=$(pfd); echo; zle redisplay }
 tp_plugin_ () { tp }
 tmrw_plugin_ () { tmrw }
+joinlines_plugin_ () {
+  if [[ "$BUFFER" == *$'\n'* ]]; then
+    # If buffer contains newlines, join them with spaces
+    BUFFER=$(echo "$BUFFER" | tr '\n' ' ')
+  else
+    # If buffer is single line, split on spaces
+    BUFFER=$(echo "$BUFFER" | tr ' ' '\n')
+  fi
+  zle redisplay
+}
 zle -N pfl_plugin_ pfl_plugin_
 zle -N pff_plugin_ pff_plugin_
 zle -N pfscripts_plugin_ pfscripts_plugin_
@@ -99,6 +109,7 @@ zle -N quickyank_plugin_ quickyank_plugin_
 zle -N pfd_plugin_ pfd_plugin_
 zle -N tp_plugin_ tp_plugin_
 zle -N tmrw_plugin_ tmrw_plugin_
+zle -N joinlines_plugin_ joinlines_plugin_
 bindkey 'ñl' pfl_plugin_
 bindkey 'ñf' pff_plugin_
 bindkey 'ñs' pfscripts_plugin_
@@ -108,6 +119,7 @@ bindkey 'ñy' quickyank_plugin_
 bindkey 'ñd' pfd_plugin_
 bindkey 'ñtp' tp_plugin_
 bindkey 'ñtr' tmrw_plugin_
+bindkey 'ñj' joinlines_plugin_
 
 autoload -z edit-command-line
 zle -N edit-command-line
