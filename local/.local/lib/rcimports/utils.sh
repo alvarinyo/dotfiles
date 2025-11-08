@@ -79,7 +79,7 @@ pfgs ()
 {
     # TODO preview both diffs in case there are staged and unstaged modifications
     git -c color.status=always status --short | fzf $FZF_OPTION_NAVIGATION $FZF_OPTION_MULTI --ansi --track --no-sort --layout=reverse-list --preview='echo {} | IFS= read -r LINE && INDEX_STATUS=${LINE:0:1} && WORK_STATUS=${LINE:1:1} && echo "$LINE" | read -r STATUS FILE && if [[ $WORK_STATUS = "M" ]]; then git diff --color=always $FILE | batcat -p; elif [[ $INDEX_STATUS = "M" ]]; then
-        git diff --staged --color=always $FILE; else script.preview_file $FILE; fi' | awk '{print $2}'
+        git diff --staged --color=always $FILE; else script.preview_file $FILE; fi' | awk '{print $2}' | tr '\n' ' '; echo
 }
 
 fag ()

@@ -8,9 +8,10 @@ $if picocom
     "\C-u" rlwrap-direct-keypress
     "\C-d" rlwrap-direct-keypress
     "\C-i" rlwrap-direct-keypress
-    "\C-j" rlwrap-direct-keypress
+    # "\C-j" rlwrap-direct-keypress
     "\C-f" rlwrap-direct-keypress
     "\C-y" rlwrap-direct-keypress
+    # "\C-p" rlwrap-direct-keypress
     "\C-t" rlwrap-direct-keypress
     "\C-g" rlwrap-direct-keypress
     "\C-|" rlwrap-direct-keypress
