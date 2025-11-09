@@ -140,3 +140,20 @@ export FZF_DEFAULT_OPTS=$FZF_DEFAULT_OPTS'
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+# Work activity logging
+WORK_LOG_DIR="${HOME}/.work_logs"
+WORK_LOG_ZSH="${WORK_LOG_DIR}/zsh_activity.log"
+
+# Log command after execution - checks WORK_LOG_ENABLE each time
+preexec() {
+  if [[ -n "$WORK_LOG_ENABLE" && "$WORK_LOG_ENABLE" != "0" ]]; then
+    # Create log directory if it doesn't exist
+    [[ ! -d "$WORK_LOG_DIR" ]] && mkdir -p "$WORK_LOG_DIR"
+
+    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    local cwd="$PWD"
+    local command="$1"
+    echo "${timestamp} | ${cwd} | ${command}" >> "$WORK_LOG_ZSH"
+  fi
+}

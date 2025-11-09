@@ -113,5 +113,16 @@ copyfiles ()
     printf '%s\n' "$@" | xargs -I{} echo "'file://$(realpath {})'" | xargs -I{} trurl {} | xclip -i -selection clipboard -t text/uri-list
 }
 
+worklog_toggle ()
+{
+    if [[ -n "$WORK_LOG_ENABLE" ]]; then
+        unset WORK_LOG_ENABLE
+        echo "Work logging disabled"
+    else
+        export WORK_LOG_ENABLE=1
+        echo "Work logging enabled"
+    fi
+}
+
 alias ndiff='git difftool --tool=nvimdiff -y $(pfgs)'
 alias findnvim='pwdx $(pgrep -a nvim | grep -v embed | awk '"'"'{print $1}'"'"') | fzf $FZF_OPTION_MULTI $FZF_OPTION_NAVIGATION | awk -F: '"'"'{print $1}'"'"''
