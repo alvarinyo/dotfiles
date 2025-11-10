@@ -126,3 +126,26 @@ worklog_toggle ()
 
 alias ndiff='git difftool --tool=nvimdiff -y $(pfgs)'
 alias findnvim='pwdx $(pgrep -a nvim | grep -v embed | awk '"'"'{print $1}'"'"') | fzf $FZF_OPTION_MULTI $FZF_OPTION_NAVIGATION | awk -F: '"'"'{print $1}'"'"''
+
+aiask_widget ()
+{
+    # Get current buffer content
+    local prompt="$BUFFER"
+
+    if [[ -z "$prompt" ]]; then
+        return 1
+    fi
+
+    # Call aiask with --sh flag to get shell command
+    local cmd=$(aiask --sh "$prompt" 2>/dev/null)
+
+    if [[ -n "$cmd" ]]; then
+        # Replace buffer with the generated command
+        BUFFER="$cmd"
+        # Move cursor to end of line
+        CURSOR=$#BUFFER
+        zle redisplay
+    else
+        return 1
+    fi
+}

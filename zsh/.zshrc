@@ -54,8 +54,8 @@ bindkey '^[[5~' up-history
 bindkey '^[[6~' down-history
 
 
-if [[ ! "$PATH" == */home/alvaroluis/s/fzf/bin* ]]; then
-  PATH="${PATH:+${PATH}:}/home/alvaroluis/s/fzf/bin"
+if [[ ! "$PATH" == *~/s/fzf/bin* ]]; then
+  PATH="${PATH:+${PATH}:}~/s/fzf/bin"
 fi
 
 source ~/s/fzf-tab/fzf-tab.plugin.zsh
@@ -110,6 +110,7 @@ zle -N pfd_plugin_ pfd_plugin_
 zle -N tp_plugin_ tp_plugin_
 zle -N tmrw_plugin_ tmrw_plugin_
 zle -N joinlines_plugin_ joinlines_plugin_
+zle -N aiask_widget aiask_widget
 bindkey 'ñl' pfl_plugin_
 bindkey 'ñf' pff_plugin_
 bindkey 'ñs' pfscripts_plugin_
@@ -120,6 +121,7 @@ bindkey 'ñd' pfd_plugin_
 bindkey 'ñtp' tp_plugin_
 bindkey 'ñtr' tmrw_plugin_
 bindkey 'ñj' joinlines_plugin_
+bindkey 'ñai' aiask_widget
 
 autoload -z edit-command-line
 zle -N edit-command-line
@@ -145,15 +147,12 @@ export NVM_DIR="$HOME/.nvm"
 WORK_LOG_DIR="${HOME}/.work_logs"
 WORK_LOG_ZSH="${WORK_LOG_DIR}/zsh_activity.log"
 
+# Create log directory once at startup if logging is enabled
+[[ -n "$WORK_LOG_ENABLE" && "$WORK_LOG_ENABLE" != "0" && ! -d "$WORK_LOG_DIR" ]] && mkdir -p "$WORK_LOG_DIR"
+
 # Log command after execution - checks WORK_LOG_ENABLE each time
 preexec() {
   if [[ -n "$WORK_LOG_ENABLE" && "$WORK_LOG_ENABLE" != "0" ]]; then
-    # Create log directory if it doesn't exist
-    [[ ! -d "$WORK_LOG_DIR" ]] && mkdir -p "$WORK_LOG_DIR"
-
-    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-    local cwd="$PWD"
-    local command="$1"
-    echo "${timestamp} | ${cwd} | ${command}" >> "$WORK_LOG_ZSH"
+    printf '%s | %s | %s\n' "$(strftime '%Y-%m-%d %H:%M:%S' $EPOCHSECONDS)" "$PWD" "$1" >> "$WORK_LOG_ZSH"
   fi
 }

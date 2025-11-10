@@ -1,0 +1,223 @@
+#!/bin/bash
+
+# ---
+# Script: aiask
+# Description: Query a local Ollama model from the command line, with prompt templates.
+#
+# Usage:
+#   aiask "<prompt>" [--model=<model_name>]
+#   aiask --tldr "<prompt>" [--model=<model_name>]
+#   aiask --sh "<prompt>" [--model=<model_name>]
+#   aiask --file <filepath> "<prompt>" [--model=<model_name>]
+# ---
+
+# --- 1. Configuration ---
+# DEFAULT_MODEL="phi3:mini"
+DEFAULT_MODEL="codellama:7b-instruct"
+
+# --- 2. Argument Parsing ---
+# Manual parsing to handle options flexibly (supports options before or after prompt)
+
+model="$DEFAULT_MODEL"
+prompt_mode="" # This will store "tldr" or "sh"
+prompt_parts=()
+file_path=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help)
+      echo "Usage: aiask [OPTIONS] \"<prompt>\""
+      echo ""
+      echo "Options:"
+      echo "  --tldr             Applies a 'short answer' prompt template."
+      echo "  --sh               Applies a 'bash command only' prompt template."
+      echo "  --file FILE        Include file contents in the prompt for analysis."
+      echo "  -m, --model MODEL  Specify the Ollama model (default: '$DEFAULT_MODEL')."
+      echo "  -h, --help         Show this help message."
+      echo ""
+      echo "Examples:"
+      echo "  aiask \"Why is the sky blue?\""
+      echo "  aiask --tldr \"Explain quantum physics\""
+      echo "  aiask --sh \"list all .txt files\""
+      echo "  aiask --sh \"find large files\" -m codellama:7b-instruct"
+      echo "  aiask -m phi3:mini \"What is recursion?\""
+      echo "  aiask --file script.sh \"What does this script do?\""
+      echo "  aiask --file config.json \"Explain this configuration\""
+      exit 0
+      ;;
+    --tldr)
+      if [[ -n "$prompt_mode" ]]; then
+        echo "Error: Cannot use --tldr and --sh at the same time." >&2
+        exit 1
+      fi
+      prompt_mode="tldr"
+      shift
+      ;;
+    --sh)
+      if [[ -n "$prompt_mode" ]]; then
+        echo "Error: Cannot use --tldr and --sh at the same time." >&2
+        exit 1
+      fi
+      prompt_mode="sh"
+      shift
+      ;;
+    -m|--model)
+      if [[ -z "$2" ]]; then
+        echo "Error: --model requires an argument." >&2
+        exit 1
+      fi
+      model="$2"
+      shift 2
+      ;;
+    --file)
+      if [[ -z "$2" ]]; then
+        echo "Error: --file requires an argument." >&2
+        exit 1
+      fi
+      file_path="$2"
+      shift 2
+      ;;
+    -*)
+      echo "Error: Unknown option '$1'" >&2
+      echo "Use --help for usage information." >&2
+      exit 1
+      ;;
+    *)
+      # Anything else is part of the prompt
+      prompt_parts+=("$1")
+      shift
+      ;;
+  esac
+done
+
+# Join all prompt parts into a single string
+raw_prompt="${prompt_parts[*]}"
+
+# --- 3. Validation Checks (Basic) ---
+
+# Check if file exists and is readable
+if [[ -n "$file_path" ]]; then
+  if [[ ! -f "$file_path" ]]; then
+    echo "Error: File '$file_path' does not exist." >&2
+    exit 1
+  fi
+  if [[ ! -r "$file_path" ]]; then
+    echo "Error: File '$file_path' is not readable." >&2
+    exit 1
+  fi
+fi
+
+# Check for 'curl'
+if ! command -v curl &> /dev/null; then
+  echo "Error: 'curl' is not installed. Please install it." >&2
+  exit 1
+fi
+
+# Check for 'jq'
+if ! command -v jq &> /dev/null; then
+  echo "Error: 'jq' is not installed. Please install it." >&2
+  exit 1
+fi
+
+# Check for prompt
+if [[ -z "$raw_prompt" ]]; then
+  echo "Error: No prompt provided." >&2
+  echo "Usage: aiask [flag] \"<prompt>\" [--model=<model_name>]" >&2
+  exit 1
+fi
+
+# Check if Ollama server is running
+if ! curl -s "http://localhost:11434" > /dev/null; then
+  echo "Error: Ollama server not responding at http://localhost:11434" >&2
+  echo "Please ensure Ollama is installed and running." >&2
+  exit 1
+fi
+
+# --- 4. Build Final Prompt ---
+
+final_prompt=""
+
+# If a file is provided, read its contents and include them in the prompt
+file_contents=""
+if [[ -n "$file_path" ]]; then
+  file_contents=$(cat "$file_path")
+  file_context="Here is the content of the file '$file_path':
+
+\`\`\`
+$file_contents
+\`\`\`
+
+"
+fi
+
+case "$prompt_mode" in
+  "tldr")
+    # This template instructs the model to be concise.
+    final_prompt="${file_context}Respond to the following prompt as concisely as possible (one or two sentences): $raw_prompt"
+    ;;
+  "sh")
+    # This template is very specific to get *only* the code.
+    final_prompt="${file_context}You are a bash command generator. Your response must be ONLY the raw bash command, nothing else. Task: $raw_prompt"
+    ;;
+  *)
+    # Default behavior: just use the raw prompt
+    if [[ -n "$file_path" ]]; then
+      final_prompt="${file_context}$raw_prompt"
+    else
+      final_prompt="$raw_prompt"
+    fi
+    ;;
+esac
+
+# --- 5. Prepare API Call ---
+
+# The local Ollama API endpoint
+api_url="http://localhost:11434/api/generate"
+
+# Safely create the JSON payload using jq
+json_payload=$(jq -n \
+                  --arg model "$model" \
+                  --arg prompt "$final_prompt" \
+                  '{model: $model, prompt: $prompt, stream: false}')
+
+# --- 6. Make API Call ---
+
+response=$(curl -s \
+             -X POST \
+             -H "Content-Type: application/json" \
+             -d "$json_payload" \
+             "$api_url")
+
+# --- 7. Handle Response ---
+
+# Check for an API error (e.g., model not found)
+if echo "$response" | jq -e '.error' > /dev/null; then
+  echo "Error calling Ollama API:" >&2
+  echo "$response" | jq -r '.error' >&2
+  exit 1
+fi
+
+# Extract the text response
+text_response=$(echo "$response" | jq -r '.response // "null"')
+
+if [[ "$text_response" == "null" ]]; then
+  echo "Error: Could not parse a valid response from the API." >&2
+  echo "Raw Response:" >&2
+  echo "$response" >&2
+  exit 1
+fi
+
+# --- 8. Post-process and Print Final Response ---
+
+# For --sh mode, clean up the response to ensure only the command is output
+if [[ "$prompt_mode" == "sh" ]]; then
+  # Remove markdown code blocks (```bash, ```, etc.)
+  text_response=$(echo "$text_response" | sed -e 's/^```.*$//' -e 's/^```$//')
+  # Remove leading/trailing whitespace and take only the first non-empty line
+  text_response=$(echo "$text_response" | grep -v '^[[:space:]]*$' | head -n 1 | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+  # Remove surrounding backticks (leading and trailing)
+  text_response=$(echo "$text_response" | sed -e 's/^`//' -e 's/`$//')
+fi
+
+# Print the final, clean response to standard output
+echo "$text_response"

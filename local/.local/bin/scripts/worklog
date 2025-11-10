@@ -1,0 +1,306 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+WORK_LOGS_DIR="${HOME}/.work_logs"
+BACKUP_DIR="${WORK_LOGS_DIR}/backups"
+ZSH_LOG="${WORK_LOGS_DIR}/zsh_activity.log"
+NVIM_LOG="${WORK_LOGS_DIR}/nvim_write.log"
+
+show_usage() {
+    cat <<EOF
+Usage: worklog <command> [args]
+
+Commands:
+    toggle                                           Toggle work logging on/off
+    get-path <zsh|nvim>                             Print path of specified worklog
+    get [zsh|nvim|all] [--sort-by <field1,field2,...>]
+                                                     Cat logs (default: all, sorted by date)
+                                                     Sort fields: date, path, command
+    clear-old                                        Remove logs from before today (with confirmation)
+    save-old                                         Archive and remove logs from before today
+    clear                                            Remove all logs including today (with confirmation)
+    save                                             Archive and remove all logs including today
+
+Examples:
+    worklog toggle
+    worklog get-path zsh
+    worklog get all --sort-by date
+    worklog get zsh --sort-by date,command
+    worklog get all --sort-by path,date
+    worklog save-old
+EOF
+}
+
+cmd_toggle() {
+    if [[ -n "${WORK_LOG_ENABLE:-}" ]]; then
+        echo "unset WORK_LOG_ENABLE"
+        echo "echo 'Work logging disabled'" >&2
+    else
+        echo "export WORK_LOG_ENABLE=1"
+        echo "echo 'Work logging enabled'" >&2
+    fi
+}
+
+cmd_get_path() {
+    if [[ $# -eq 0 ]]; then
+        echo "Error: Missing argument" >&2
+        echo "Usage: worklog get-path <zsh|nvim>" >&2
+        exit 1
+    fi
+
+    case "$1" in
+        zsh)
+            echo "$ZSH_LOG"
+            ;;
+        nvim)
+            echo "$NVIM_LOG"
+            ;;
+        *)
+            echo "Error: Invalid argument '$1'" >&2
+            echo "Usage: worklog get-path <zsh|nvim>" >&2
+            exit 1
+            ;;
+    esac
+}
+
+cmd_get() {
+    local source="all"
+    local -a sort_fields=("date")
+
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            zsh|nvim|all)
+                source="$1"
+                shift
+                ;;
+            --sort-by)
+                if [[ $# -lt 2 ]]; then
+                    echo "Error: --sort-by requires an argument" >&2
+                    exit 1
+                fi
+                # Split comma-separated fields
+                IFS=',' read -ra sort_fields <<< "$2"
+                shift 2
+                ;;
+            *)
+                echo "Error: Unknown argument '$1'" >&2
+                exit 1
+                ;;
+        esac
+    done
+
+    # Validate sort fields
+    for field in "${sort_fields[@]}"; do
+        if [[ ! "$field" =~ ^(date|path|command)$ ]]; then
+            echo "Error: Invalid sort field '$field'. Use date, path, or command." >&2
+            exit 1
+        fi
+    done
+
+    # Collect logs
+    local logs=()
+    case "$source" in
+        zsh)
+            [[ -f "$ZSH_LOG" ]] && logs+=("$ZSH_LOG")
+            ;;
+        nvim)
+            [[ -f "$NVIM_LOG" ]] && logs+=("$NVIM_LOG")
+            ;;
+        all)
+            [[ -f "$ZSH_LOG" ]] && logs+=("$ZSH_LOG")
+            [[ -f "$NVIM_LOG" ]] && logs+=("$NVIM_LOG")
+            ;;
+    esac
+
+    if [[ ${#logs[@]} -eq 0 ]]; then
+        echo "No log files found" >&2
+        exit 0
+    fi
+
+    # Build sort command with multiple keys
+    local sort_cmd="sort -t'|'"
+    for field in "${sort_fields[@]}"; do
+        case "$field" in
+            date)
+                sort_cmd+=" -k1,1"
+                ;;
+            path)
+                sort_cmd+=" -k2,2"
+                ;;
+            command)
+                sort_cmd+=" -k3,3"
+                ;;
+        esac
+    done
+
+    # Output logs with sorting
+    cat "${logs[@]}" | eval "$sort_cmd"
+}
+
+get_today_date() {
+    date '+%Y-%m-%d'
+}
+
+cmd_clear_old() {
+    local today
+    today=$(get_today_date)
+
+    echo "This will remove all log entries from before $today." >&2
+    read -p "Continue? (y/n): " -n 1 -r >&2
+    echo >&2
+
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "Cancelled." >&2
+        exit 0
+    fi
+
+    if [[ -f "$ZSH_LOG" ]]; then
+        echo "removing old entries from $ZSH_LOG"
+        local temp_file="${ZSH_LOG}.tmp"
+        grep "^${today}" "$ZSH_LOG" > "$temp_file" 2>/dev/null || true
+        mv "$temp_file" "$ZSH_LOG"
+    fi
+
+    if [[ -f "$NVIM_LOG" ]]; then
+        echo "removing old entries from $NVIM_LOG"
+        local temp_file="${NVIM_LOG}.tmp"
+        grep "^${today}" "$NVIM_LOG" > "$temp_file" 2>/dev/null || true
+        mv "$temp_file" "$NVIM_LOG"
+    fi
+}
+
+cmd_save_old() {
+    local today
+    today=$(get_today_date)
+    local timestamp
+    timestamp=$(date '+%Y%m%d_%H%M%S')
+
+    mkdir -p "$BACKUP_DIR"
+
+    if [[ -f "$ZSH_LOG" ]]; then
+        local log_name=$(basename "$ZSH_LOG")
+        local backup_file="${BACKUP_DIR}/${log_name%.log}_old_${timestamp}.log"
+
+        # Extract old entries
+        grep -v "^${today}" "$ZSH_LOG" > "$backup_file" 2>/dev/null || true
+
+        if [[ -s "$backup_file" ]]; then
+            # Keep only today's entries
+            grep "^${today}" "$ZSH_LOG" > "${ZSH_LOG}.tmp" 2>/dev/null || true
+            mv "${ZSH_LOG}.tmp" "$ZSH_LOG"
+            echo "Saved old entries from $log_name to $backup_file" >&2
+        else
+            rm "$backup_file"
+        fi
+    fi
+
+    if [[ -f "$NVIM_LOG" ]]; then
+        local log_name=$(basename "$NVIM_LOG")
+        local backup_file="${BACKUP_DIR}/${log_name%.log}_old_${timestamp}.log"
+
+        # Extract old entries
+        grep -v "^${today}" "$NVIM_LOG" > "$backup_file" 2>/dev/null || true
+
+        if [[ -s "$backup_file" ]]; then
+            # Keep only today's entries
+            grep "^${today}" "$NVIM_LOG" > "${NVIM_LOG}.tmp" 2>/dev/null || true
+            mv "${NVIM_LOG}.tmp" "$NVIM_LOG"
+            echo "Saved old entries from $log_name to $backup_file" >&2
+        else
+            rm "$backup_file"
+        fi
+    fi
+}
+
+cmd_clear() {
+    echo "This will remove ALL log entries, including today's." >&2
+    read -p "Continue? (y/n): " -n 1 -r >&2
+    echo >&2
+
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "Cancelled." >&2
+        exit 0
+    fi
+
+    if [[ -f "$ZSH_LOG" ]]; then
+        echo "removing $ZSH_LOG"
+        rm "$ZSH_LOG"
+    fi
+
+    if [[ -f "$NVIM_LOG" ]]; then
+        echo "removing $NVIM_LOG"
+        rm "$NVIM_LOG"
+    fi
+}
+
+cmd_save() {
+    local timestamp
+    timestamp=$(date '+%Y%m%d_%H%M%S')
+
+    mkdir -p "$BACKUP_DIR"
+
+    local saved=0
+    for log in "$ZSH_LOG" "$NVIM_LOG"; do
+        if [[ -f "$log" ]]; then
+            local log_name
+            log_name=$(basename "$log")
+            local backup_file="${BACKUP_DIR}/${log_name%.log}_${timestamp}.log"
+
+            cp "$log" "$backup_file"
+            rm "$log"
+            echo "Saved $(basename "$log") to $backup_file" >&2
+            ((saved++))
+        fi
+    done
+
+    if [[ $saved -eq 0 ]]; then
+        echo "No log files found to save." >&2
+    fi
+}
+
+main() {
+    if [[ $# -eq 0 ]]; then
+        show_usage
+        exit 1
+    fi
+
+    local command="$1"
+    shift
+
+    case "$command" in
+        toggle)
+            cmd_toggle "$@"
+            ;;
+        get-path)
+            cmd_get_path "$@"
+            ;;
+        get)
+            cmd_get "$@"
+            ;;
+        clear-old)
+            cmd_clear_old "$@"
+            ;;
+        save-old)
+            cmd_save_old "$@"
+            ;;
+        clear)
+            cmd_clear "$@"
+            ;;
+        save)
+            cmd_save "$@"
+            ;;
+        help|--help|-h)
+            show_usage
+            ;;
+        *)
+            echo "Error: Unknown command '$command'" >&2
+            echo >&2
+            show_usage
+            exit 1
+            ;;
+    esac
+}
+
+main "$@"
