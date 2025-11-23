@@ -1,0 +1,3 @@
+[submodule "habits"]
+	path = habits
+	url = git@github.com:alvarinyo/habits.git
