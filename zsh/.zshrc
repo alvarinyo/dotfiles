@@ -54,9 +54,9 @@ bindkey '^[[5~' up-history
 bindkey '^[[6~' down-history
 
 
-if [[ ! "$PATH" == *~/s/fzf/bin* ]]; then
-  PATH="${PATH:+${PATH}:}~/s/fzf/bin"
-fi
+# Add fzf to PATH if not already present
+fzf_bin_path="$HOME/s/fzf/bin"
+[[ ":$PATH:" != *":$fzf_bin_path:"* ]] && PATH="$PATH:$fzf_bin_path"
 
 source ~/s/fzf-tab/fzf-tab.plugin.zsh
 source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
@@ -70,9 +70,14 @@ bindkey '^r' hist_plugin_
 cargo_bin_path="$HOME/.cargo/bin"
 scripts_path="$HOME/.local/bin/scripts"
 rcimports_path="$HOME/.local/lib/rcimports"
-nvim_path="$PATH:/opt/nvim-linux64/bin"
+nvim_path="/opt/nvim-linux64/bin"
 
-export PATH="$PATH:$cargo_bin_path:$scripts_path:$nvim_path"
+# Add paths only if they're not already in PATH
+[[ ":$PATH:" != *":$cargo_bin_path:"* ]] && PATH="$PATH:$cargo_bin_path"
+[[ ":$PATH:" != *":$scripts_path:"* ]] && PATH="$PATH:$scripts_path"
+[[ ":$PATH:" != *":$nvim_path:"* ]] && PATH="$PATH:$nvim_path"
+
+export PATH
 export EDITOR=nvim
 
 
@@ -140,8 +145,11 @@ export FZF_DEFAULT_OPTS=$FZF_DEFAULT_OPTS'
  '$FZF_OPTION_NAVIGATION
 
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+# Only load nvm if not already loaded (prevents PATH duplication)
+if [[ -z "$NVM_BIN" ]]; then
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+fi
 
 # Work activity logging
 WORK_LOG_DIR="${HOME}/.work_logs"

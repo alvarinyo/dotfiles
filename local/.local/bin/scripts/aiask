@@ -9,6 +9,8 @@
 #   aiask --tldr "<prompt>" [--model=<model_name>]
 #   aiask --sh "<prompt>" [--model=<model_name>]
 #   aiask --file <filepath> "<prompt>" [--model=<model_name>]
+#   aiask --file <filepath> --file-line-range <start,end> "<prompt>" [--model=<model_name>]
+#   cat file.txt | aiask --file - "<prompt>" [--model=<model_name>]
 # ---
 
 # --- 1. Configuration ---
@@ -22,6 +24,7 @@ model="$DEFAULT_MODEL"
 prompt_mode="" # This will store "tldr" or "sh"
 prompt_parts=()
 file_path=""
+file_line_range=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -29,11 +32,13 @@ while [[ $# -gt 0 ]]; do
       echo "Usage: aiask [OPTIONS] \"<prompt>\""
       echo ""
       echo "Options:"
-      echo "  --tldr             Applies a 'short answer' prompt template."
-      echo "  --sh               Applies a 'bash command only' prompt template."
-      echo "  --file FILE        Include file contents in the prompt for analysis."
-      echo "  -m, --model MODEL  Specify the Ollama model (default: '$DEFAULT_MODEL')."
-      echo "  -h, --help         Show this help message."
+      echo "  --tldr                      Applies a 'short answer' prompt template."
+      echo "  --sh                        Applies a 'bash command only' prompt template."
+      echo "  --file FILE                 Include file contents in the prompt for analysis."
+      echo "                              Use '-' to read from STDIN."
+      echo "  --file-line-range START,END Extract only lines START to END from the file (requires --file)."
+      echo "  -m, --model MODEL           Specify the Ollama model (default: '$DEFAULT_MODEL')."
+      echo "  -h, --help                  Show this help message."
       echo ""
       echo "Examples:"
       echo "  aiask \"Why is the sky blue?\""
@@ -43,6 +48,9 @@ while [[ $# -gt 0 ]]; do
       echo "  aiask -m phi3:mini \"What is recursion?\""
       echo "  aiask --file script.sh \"What does this script do?\""
       echo "  aiask --file config.json \"Explain this configuration\""
+      echo "  aiask --file large_file.log --file-line-range 100,200 \"Analyze these log entries\""
+      echo "  cat error.log | aiask --file - \"What caused this error?\""
+      echo "  git diff | aiask --file - --file-line-range 1,50 \"Review these changes\""
       exit 0
       ;;
     --tldr)
@@ -77,6 +85,14 @@ while [[ $# -gt 0 ]]; do
       file_path="$2"
       shift 2
       ;;
+    --file-line-range)
+      if [[ -z "$2" ]]; then
+        echo "Error: --file-line-range requires an argument." >&2
+        exit 1
+      fi
+      file_line_range="$2"
+      shift 2
+      ;;
     -*)
       echo "Error: Unknown option '$1'" >&2
       echo "Use --help for usage information." >&2
@@ -95,14 +111,41 @@ raw_prompt="${prompt_parts[*]}"
 
 # --- 3. Validation Checks (Basic) ---
 
-# Check if file exists and is readable
-if [[ -n "$file_path" ]]; then
+# Check if file exists and is readable (skip check for stdin)
+if [[ -n "$file_path" && "$file_path" != "-" ]]; then
   if [[ ! -f "$file_path" ]]; then
     echo "Error: File '$file_path' does not exist." >&2
     exit 1
   fi
   if [[ ! -r "$file_path" ]]; then
     echo "Error: File '$file_path' is not readable." >&2
+    exit 1
+  fi
+fi
+
+# Validate file-line-range argument
+if [[ -n "$file_line_range" ]]; then
+  if [[ -z "$file_path" ]]; then
+    echo "Error: --file-line-range requires --file to be specified." >&2
+    exit 1
+  fi
+
+  # Parse and validate the range format (should be "start,end")
+  if [[ ! "$file_line_range" =~ ^[0-9]+,[0-9]+$ ]]; then
+    echo "Error: --file-line-range must be in format 'START,END' (e.g., '100,200')." >&2
+    exit 1
+  fi
+
+  start_line="${file_line_range%,*}"
+  end_line="${file_line_range#*,}"
+
+  if [[ "$start_line" -lt 1 ]]; then
+    echo "Error: Start line must be >= 1." >&2
+    exit 1
+  fi
+
+  if [[ "$end_line" -lt "$start_line" ]]; then
+    echo "Error: End line must be >= start line." >&2
     exit 1
   fi
 fi
@@ -140,14 +183,53 @@ final_prompt=""
 # If a file is provided, read its contents and include them in the prompt
 file_contents=""
 if [[ -n "$file_path" ]]; then
-  file_contents=$(cat "$file_path")
-  file_context="Here is the content of the file '$file_path':
+  if [[ "$file_path" == "-" ]]; then
+    # Read from STDIN
+    if [[ -n "$file_line_range" ]]; then
+      # Extract only the specified line range from stdin
+      file_contents=$(sed -n "${start_line},${end_line}p")
+      file_context="Here is the content from STDIN (lines $start_line to $end_line):
 
 \`\`\`
 $file_contents
 \`\`\`
 
 "
+    else
+      # Read all of stdin
+      file_contents=$(cat)
+      file_context="Here is the content from STDIN:
+
+\`\`\`
+$file_contents
+\`\`\`
+
+"
+    fi
+  else
+    # Read from a file
+    if [[ -n "$file_line_range" ]]; then
+      # Extract only the specified line range
+      file_contents=$(sed -n "${start_line},${end_line}p" "$file_path")
+      file_context="Here is the content of the file '$file_path' (lines $start_line to $end_line):
+
+\`\`\`
+$file_contents
+\`\`\`
+
+"
+    else
+      # Read the entire file
+      file_contents=$(cat "$file_path")
+      file_context="Here is the content of the file '$file_path':
+
+\`\`\`
+$file_contents
+\`\`\`
+
+"
+    fi
+  fi
 fi
 
 case "$prompt_mode" in

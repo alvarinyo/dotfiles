@@ -124,6 +124,32 @@ worklog_toggle ()
     fi
 }
 
+tmux_worklog_toggle ()
+{
+    # Check if we're in a tmux session
+    if [[ -z "$TMUX" ]]; then
+        echo "Error: Not in a tmux session" >&2
+        return 1
+    fi
+
+    # Get the number of panes in the current session
+    local pane_count=$(tmux list-panes -s -F '#{pane_id}' | wc -l)
+
+    # If there are more than 1 pane, warn the user
+    if [[ $pane_count -gt 1 ]]; then
+        echo "Error: There are $pane_count panes open in this session." >&2
+        echo "Please close all other panes before toggling worklog." >&2
+        echo "You can list them with: tmux list-panes -s" >&2
+        return 1
+    fi
+
+    tmux set-environment WORK_LOG_ENABLE 1
+
+    # Instruct user to run worklog toggle manually
+    echo "Run the following command to toggle worklog in this pane:"
+    echo "  eval \"\$(worklog toggle)\""
+}
+
 alias ndiff='git difftool --tool=nvimdiff -y $(pfgs)'
 alias findnvim='pwdx $(pgrep -a nvim | grep -v embed | awk '"'"'{print $1}'"'"') | fzf $FZF_OPTION_MULTI $FZF_OPTION_NAVIGATION | awk -F: '"'"'{print $1}'"'"''
 
