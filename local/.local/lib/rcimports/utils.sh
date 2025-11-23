@@ -163,6 +163,8 @@ aiask_widget ()
     fi
 
     # Call aiask with --sh flag to get shell command
+    echo
+    echo "Generating command for '$prompt'..."
     local cmd=$(aiask --sh "$prompt" 2>/dev/null)
 
     if [[ -n "$cmd" ]]; then
